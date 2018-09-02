@@ -25,14 +25,31 @@ function getAllUsers(req, res, next) {
 }
 
 function getSingleUser(req, res, next) {
-    var pupID = parseInt(req.params.id);
-    db.one('select * from users where id = $1', pupID)
+    var userID = parseInt(req.params.id);
+    db.one('select * from users where id = $1', userID)
         .then(function(data) {
             res.status(200)
                 .json({
                     status: 'success',
                     data: data,
-                    message: 'Retrieved ONE puppy'
+                    message: 'Retrieved ONE user'
+                });
+        })
+        .catch(function(err) {
+            return next(err);
+        });
+}
+
+function getUserByEmail(req, res, next) {
+    var email = req.params.email;
+    console.log(email);
+    db.one('select * from users where profile_id = $1', email)
+        .then(function(data) {
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: data,
+                    message: 'Retrieved ONE user'
                 });
         })
         .catch(function(err) {
@@ -41,24 +58,51 @@ function getSingleUser(req, res, next) {
 }
 
 function createUser(req, res, next) {
-    req.body.age = parseInt(req.body.age);
-    db.none('insert into users(name, address, email, phone)' +
-            'values(${name}, ${address}, ${email}, ${phone})',
-            req.body)
-        .then(function() {
-            res.status(200)
-                .json({
-                    status: 'success',
-                    message: 'Inserted one puppy'
-                });
+    console.log(req.body);
+    let user_email = req.body.email;
+    db.one('select * from users where email = $1', user_email)
+        .then(function(data) {
+            console.log(data);
+            if (data.email == req.body.email) {
+                res.status(200)
+                    .json({
+                        status: 'error',
+                        message: 'user email existed allready'
+                    });
+            }
+
         })
         .catch(function(err) {
-            return next(err);
+            //return next(err);
+            db.none('insert into users(first_name, last_name,email,profile_id, phone,password,profilePicture)' +
+                    'values(${first_name}, ${last_name}, ${email},${profile_id}, ${phone}, ${password}, ${profilePicture})',
+                    req.body)
+                .then(function(data) {
+                    console.log("user data after signUp");
+                    console.log(data);
+                    db.one('select * from users where email = $1', user_email)
+                        .then(function(data) {
+                            console.log(data);
+                            res.status(200)
+                                .json({
+                                    status: 'success',
+                                    message: 'Inserted one user',
+                                    user: data
+                                });
+                        })
+                        .catch(function(err) {
+                            return next(err);
+                        })
+
+                })
+                .catch(function(err) {
+                    return next(err);
+                });
         });
 }
 
 function updateUser(req, res, next) {
-    db.none('update users set name=$1, address=$2, email=$3, phone=$4 where id=$5', [req.body.name, req.body.address, req.body.email, parseInt(req.body.phone),
+    db.none('update users set first_name=$1, last_name=$2,profile_id=$3, email=$4, phone=$5 , password=$6 ,profilePicture=$7 where id=$8', [req.body.first_name, req.body.last_name, req.body.profile_id, req.body.email, parseInt(req.body.phone), req.body.password, req.body.profilePicture,
             parseInt(req.params.id)
         ])
         .then(function() {
@@ -90,11 +134,40 @@ function removeUser(req, res, next) {
         });
 }
 
+function validateUser(req, res, next) {
+    console.log(req.body.email);
+    console.log(req.body.password);
+    var user_email = req.body.email;
+    db.one('select * from users where email = $1', user_email)
+        .then(function(data) {
+            console.log(data);
+            if (data.password == req.body.password) {
+                res.status(200)
+                    .json({
+                        status: 'success',
+                        data: data,
+                        message: 'Retrieved ONE user'
+                    });
+            } else {
+                res.status(200)
+                    .json({
+                        status: 'failure',
+                        message: 'password not matched'
+                    });
+            }
+
+        })
+        .catch(function(err) {
+            return next(err);
+        });
+}
 
 module.exports = {
     getAllUsers: getAllUsers,
     getSingleUser: getSingleUser,
     createUser: createUser,
     updateUser: updateUser,
-    removeUser: removeUser
+    removeUser: removeUser,
+    validateUser: validateUser,
+    getUserByEmail: getUserByEmail
 };

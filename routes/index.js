@@ -203,4 +203,14 @@ router.get('/api/getTopicQuestions/:id', questions.getTopicQuestions);
 
 router.get('/api/getTopicComments/:id', comments.getTopicComments);
 router.post('/api/comments', comments.createComment);
+
+router.get('/api/users', users.getAllUsers);
+router.get('/api/users/:id', users.getSingleUser);
+router.post('/api/users', users.createUser);
+router.put('/api/users/:id', users.updateUser);
+router.delete('/api/users/:id', users.removeUser);
+
+router.post('/api/validateUser', users.validateUser);
+router.get('/api/getUserByEmail/:email', users.getUserByEmail);
+
 module.exports = router;
