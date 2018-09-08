@@ -1,0 +1,4 @@
+"ERROR:  syntax error at or near "select"
+LINE 3: select * from users;
+        ^
+"
