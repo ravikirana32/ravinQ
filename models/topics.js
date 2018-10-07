@@ -1,44 +1,52 @@
 var promise = require('bluebird');
+//var db = require('./dbConnections');
 
 var options = {
     // Initialization Options
     promiseLib: promise
 };
 
-var pgp = require('pg-promise')(options);
-var connectionString = 'postgres://postgres:login1-2@localhost:5432/postgres';
-var db = pgp(connectionString);
+var mysql = require('mysql');
+var db = mysql.createConnection({
+    host: 'localhost',
+    port: 3306,
+    user: 'ravinotd_root',
+    password: 'root123',
+    database: 'ravinotd_quizdb'
+});
+
+db.connect();
+
+//var pgp = require('pg-promise')(options);
+//var connectionString = 'postgres://postgres:login1-2@localhost:5432/postgres';
+//var db = pgp(connectionString);
 
 function getAllTopics(req, res, next) {
     console.log("inside get all topics");
-    db.any('select * from topics')
-        .then(function(data) {
-            res.status(200)
-                .json({
-                    status: 'success',
-                    data: data,
-                    message: 'Retrieved ALL puppies'
-                });
-        })
-        .catch(function(err) {
-            return next(err);
-        });
+    db.query('SELECT * FROM topics', function(err, rows, fields) {
+        if (err) throw err;
+        res.status(200)
+            .json({
+                status: 'success',
+                data: rows,
+                message: 'Retrieved ALL puppies'
+            });
+    });
+    //db.end();
 }
 
 function getSingleTopic(req, res, next) {
+    console.log("get single topic " + parseInt(req.params.id));
     var pupID = parseInt(req.params.id);
-    db.one('select * from topics where id = $1', pupID)
-        .then(function(data) {
-            res.status(200)
-                .json({
-                    status: 'success',
-                    data: data,
-                    message: 'Retrieved ONE puppy'
-                });
-        })
-        .catch(function(err) {
-            return next(err);
-        });
+    db.query('select * from topics where id = ?', [pupID], function(err, rows, fields) {
+        if (err) throw err;
+        res.status(200)
+            .json({
+                status: 'success',
+                data: rows,
+                message: 'Retrieved ALL puppies'
+            });
+    });
 }
 
 function createTopic(req, res, next) {
